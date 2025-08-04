@@ -73,7 +73,7 @@ const virtualAccountSchema = new Schema(
     createdAt: {
      type: Date,
      default: Date.now,
-     expires: 60 * 2, //expires after 35 mins
+     expires: 60 * 35, //expires after 35 mins
    },
   },
 );

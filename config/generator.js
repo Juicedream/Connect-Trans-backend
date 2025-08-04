@@ -140,3 +140,8 @@ export async function fetchResponses(res, amount, acc1, acc2, ref){
     return res.status(status[idx]).json(responses[idx]);
   }, 3000)
 } 
+
+
+
+
+

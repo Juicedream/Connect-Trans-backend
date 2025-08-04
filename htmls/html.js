@@ -59,6 +59,39 @@ export const createDeveloperHTML = (
   `;
 };
 
+export const changePasswordHtml = (password, fullName) => {
+  return `
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+      <div style="border-radius: 5px; box-shadow: 2px 4px 5px 3px grey; background: white; padding: 20px; width: max-content;">
+  
+        <!-- Email Header -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
+       
+          <h1 style="margin: 0;">Connect Bank Password Change <span style="color: light-green;">Successful!</span></h1>
+        </div>
+  
+        <!-- Email Body -->
+        <div style="background: rgba(206, 195, 195, 0.886); padding: 20px; border-radius: 5px; margin-top: 1px;">
+          <h2 style="margin-top: 0;">Dear ${fullName},</h2>
+
+          <p>Your Password change was successful.</p>
+        
+          <hr style="border: 0.5px solid gray; margin: 15px 0;">
+          <p><b>Password:</b> <span style="font-size:22px;">${password}</span></p>
+          <p style="color: red; font-weight: bold; text-align: center;">⚠️ Do not share your sign-in details.</p>
+        </div>
+  
+        <!-- Email Footer -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 10px; border-radius: 5px; margin-top: 2px;">
+          <p>If you didn’t make this request, contact <b>admin@connecttransbank.com</b> or call: <b>07012345678</b></p>
+        </div>
+  
+      </div>
+    </div>
+  </body>
+  `;
+};
 export const forgotPasswordHtml = (defaultPassword, fullName, time) => {
   return `
   <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
@@ -77,10 +110,10 @@ export const forgotPasswordHtml = (defaultPassword, fullName, time) => {
 
           <p>A request was sent to change your password on this account.</p>
         
-           <p>If you didn’t make this request, Kindly ignore/b></p>
+           <p>If you didn’t make this request, Kindly ignore</b></p>
 
           <hr style="border: 0.5px solid gray; margin: 15px 0;">
-          <p><b>Default Password:</b> "${defaultPassword}"  expires ${time} minutes</p>
+          <p><b>Default Password:</b> <span style="font-size:24px;">${defaultPassword}</span>  expires ${time} minutes</p>
           <p style="color: red; font-weight: bold; text-align: center;">⚠️ Do not share your sign-in details.</p>
         </div>
   
