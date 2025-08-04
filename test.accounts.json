@@ -1,0 +1,44 @@
+{
+  "accounts": [
+    {
+      "_id": { "$oid": "1" },
+      "userId": { "$oid": "12" },
+      "accountNumber": "1234567890",
+      "accountName": "TEST ACCOUNT 1",
+      "accountType": "current",
+      "cardType": "mastercard",
+      "hasOtp": false,
+      "otpCode": "",
+      "balance": 500,
+      "pin": "1234",
+      "bank": "ConnectTrans Bank",
+      "currency": "NGN",
+      "status": "active",
+      "hasCard": false,
+      "transactions": [],
+      "createdAt": { "$date": "2025-08-02T12:15:22.210Z" },
+      "updatedAt": { "$date": "2025-08-02T12:15:22.210Z" },
+      "__v": 0
+    },
+    {
+      "_id": { "$oid": "2" },
+      "userId": { "$oid": "68" },
+      "accountNumber": "0987654321",
+      "accountName": "TEST ACCOUNT 2",
+      "accountType": "savings",
+      "cardType": "visa",
+      "hasOtp": false,
+      "otpCode": "",
+      "balance": 1200,
+      "pin": "4321",
+      "bank": "ConnectTrans Bank",
+      "currency": "NGN",
+      "status": "active",
+      "hasCard": false,
+      "transactions": [],
+      "createdAt": { "$date": "2025-08-02T12:15:22.210Z" },
+      "updatedAt": { "$date": "2025-08-02T12:15:22.210Z" },
+      "__v": 0
+    }
+  ]
+}

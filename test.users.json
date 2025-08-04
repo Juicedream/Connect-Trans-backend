@@ -1,0 +1,48 @@
+{
+  "users": [
+    {
+      "_id": 68,
+      "name": "Tor Tor",
+      "age": 45,
+      "avatar": "https://avatar.iran.liara.run/username?username=tor+tor",
+      "gender": "male",
+      "password": "76nnm@356?tty",
+      "email": "osheyBadest@ytr5.com",
+      "role": "customer",
+      "birthday": "1987-05-11",
+      "state": "State of Mind",
+      "country": "Fantasy Skadosh",
+      "address": "Wonderland",
+      "phoneNumber": "16721564113",
+      "accounts": [2],
+      "cards": [],
+      "createdAt": "2025-08-02T12:15:22.040Z",
+      "updatedAt": "2025-08-02T12:15:22.040Z",
+      "__v": 0,
+      "beneficiaries": [],
+      "isDeveloper": false
+    },
+    {
+      "_id": 12,
+      "name": "Tozzo",
+      "age": 23,
+      "avatar": "https://avatar.iran.liara.run/username?username=tor+tor",
+      "gender": "female",
+      "password": "0jht43.$7792",
+      "email": "suya_tozzo@p23.com",
+      "role": "customer",
+      "birthday": "2002-08-25",
+      "state": "Suya Mistro",
+      "country": "Meat up",
+      "address": "Office",
+      "phoneNumber": "27176418731091",
+      "accounts": [1],
+      "cards": [],
+      "createdAt": "2025-08-02T12:15:22.040Z",
+      "updatedAt": "2025-08-02T12:15:22.040Z",
+      "__v": 0,
+      "beneficiaries": [],
+      "isDeveloper": false
+    }
+  ]
+}
