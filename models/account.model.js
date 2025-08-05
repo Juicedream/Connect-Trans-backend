@@ -76,6 +76,10 @@ const accountSchema = new Schema(
         ref: "Transaction", // Links to multiple accounts
       },
     ],
+    pin: {
+      type: String,
+      required: true
+    }
   },
   { timestamps: true } // Adds createdAt & updatedAt fields
 );

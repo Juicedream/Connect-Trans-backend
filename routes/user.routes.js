@@ -12,6 +12,7 @@ import {
   updateUser,
   allTestUsers,
   getTestUserById,
+  createCard,
 } from "../controllers/user.controller.js";
 import { allUsers } from "../controllers/user.controller.js";
 
@@ -36,8 +37,8 @@ userRouter
 
   .put("/:userId", validateToken, updateUser)
 
+  .post("/create-card", validateToken, createCard)
   .get("/card-details/:id")
-  .post("/create-card")
 
   .put("/info/:id")
 

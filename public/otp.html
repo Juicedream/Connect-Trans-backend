@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConnecTrans Bank OTP</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="flex h-screen bg-gray-100 items-center justify-center">
+    <dialog id="my_modal_4" class="modal" open>
+      <div class="modal-box w-11/12 max-w-md">
+        <h2 class="text-xl font-semibold text-center" id="title">
+          ConnectTrans Bank
+        </h2>
+        <p class="text-center mt-2" id="paragraph">Kindly enter your OTP</p>
+
+        <form method="dialog" class="space-y-4 mt-4">
+          <div id="loading-container" class="flex justify-center hidden">
+            <span
+              class="loading loading-bars text-success text-center loading-xl"
+              id="loading"
+            ></span>
+          </div>
+
+          <div class="flex gap-2 justify-center" id="form">
+            <input
+              type="text"
+              maxlength="1"
+              autofocus
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="input input-bordered w-12 h-12 text-center text-xl"
+            />
+          </div>
+
+          <div class="text-center">
+            <button type="button" class="btn btn-primary" id="verify-btn">
+              Verify
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <script>
+      const inputs = document.querySelectorAll("input[type='text']");
+      const verifyBtn = document.querySelector("#verify-btn");
+      const loadingContainer = document.querySelector("#loading-container");
+      const modal = document.querySelector("#my_modal_4");
+
+      const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      };
+
+      let correctOtp = getCookie("otp"); // e.g., "abc123"
+
+      function checkAllInputsFilled() {
+        const allFilled = Array.from(inputs).every(
+          (input) => input.value.trim() !== ""
+        );
+        verifyBtn.disabled = !allFilled;
+      }
+
+      inputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+          if (input.value.length === 1 && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+          }
+          checkAllInputsFilled();
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && input.value === "" && index > 0) {
+            inputs[index - 1].focus();
+          }
+          setTimeout(checkAllInputsFilled, 10);
+        });
+      });
+
+      verifyBtn.disabled = true;
+
+      verifyBtn.addEventListener("click", () => {
+        loadingContainer.classList.remove("hidden");
+        inputs.forEach((input) => (input.disabled = true));
+        verifyBtn.disabled = true;
+
+        document.querySelector("#paragraph").textContent =
+          "Hold on, we are verifying your OTP";
+
+        const otp = Array.from(inputs)
+          .map((input) => input.value)
+          .join("");
+
+        console.log("OTP:", otp);
+
+        setTimeout(() => {
+          loadingContainer.classList.add("hidden");
+
+          if (otp === correctOtp) {
+            document.querySelector("#paragraph").textContent =
+              "✅ OTP Verified!";
+            setTimeout(() => {
+              loadingContainer.classList.remove("hidden");
+              inputs.forEach((input) => (input.style.display = "none"));
+              verifyBtn.style.display = "none";
+              document.querySelector("#paragraph").textContent =
+                "Redirecting...";
+              document.querySelector("#title").style.display = "none";
+            }, 2000);
+            setTimeout(() => {
+              let idx = Math.floor(Math.random() * 2);
+              let message = ["success", "failed"]
+              let payment = message[idx];
+              console.log({payment})
+            //   fetch("http://localhost:3000/api/v1/account/verify-otp", {
+            //       method: "POST",
+            //       headers: {
+            //           "Content-Type": "application/json",
+            //         },
+            //         body: JSON.stringify({ payment }),
+            //     })
+            //     .then((res) => res.json())
+            //     .then((data) => {
+            //         console.log(data)
+        // });
+                
+                    modal.close();
+                    window.location.href = `http://127.0.0.1:5500/backend/public/card.html?status=${payment}`;
+
+            }, 6000);
+          } else {
+            document.querySelector("#paragraph").textContent =
+              "❌ Invalid OTP. Try again.";
+            inputs.forEach((input) => {
+              input.disabled = false;
+              input.value = "";
+            });
+            inputs[0].focus();
+            verifyBtn.disabled = true;
+          }
+        }, 2000); // simulate verification delay
+      });
+    </script>
+  </body>
+</html>

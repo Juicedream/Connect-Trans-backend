@@ -16,10 +16,18 @@ import {
   getThreeMonthsFromNow,
 } from "../config/generator.js";
 import { sendMail } from "../config/email.config.js";
-import { createDeveloperHTML } from "../htmls/html.js";
+import {
+  cardCreationHtml,
+  createDeveloperHTML,
+  receiverTransactionHtml,
+  senderTransactionHtml,
+} from "../htmls/html.js";
 import { SALT } from "../env.js";
 import { isValidObjectId } from "mongoose";
 import Developer from "../models/developer.model.js";
+import Account from "../models/account.model.js";
+import Transaction from "../models/transactions.model.js";
+import Card from "../models/card.model.js";
 
 const raw = fs.readFileSync("./test.users.json", "utf-8");
 const data = JSON.parse(raw);
@@ -38,25 +46,25 @@ const allUsers = async (req, res) => {
 
   const users = await User.find({});
 
-  if(users.length < 1){
+  if (users.length < 1) {
     return res.status(404).json({
       code: 404,
-      message: "No Users!"
+      message: "No Users!",
     });
   }
 
   return res.status(200).json({
-    users
+    users,
   });
-}
+};
 
 const updateUser = async (req, res) => {
   try {
     const { userId } = req.params; // assuming you're passing user ID as a URL param
-    const {user} = req;
+    const { user } = req;
 
-    if(userId !== user.id)return res.status(400).json({ code: 400, message: "Invalid User ID" });
-
+    if (userId !== user.id)
+      return res.status(400).json({ code: 400, message: "Invalid User ID" });
 
     const updates = req.body;
 
@@ -119,20 +127,145 @@ const updateUser = async (req, res) => {
   }
 };
 
+// cards
 
+const createCard = async (req, res) => {
+  const { user } = req;
+  const { faceType, cardType } = req.body;
+  try {
+    if (!faceType || !cardType) {
+      return res.status(400).json({
+        code: 400,
+        message: "All Fields are required",
+      });
+    }
 
+    // creating card
+    const panNumber = generatePanNumber(cardType); //based on card type;
+    const expiryDate = generateExpiryDate();
+    const cvv = cvvGenerator();
+    const pin = pinGenerator();
 
+    const hashedPanNumber = bcrypt.hashSync(panNumber.toString(), 10);
+    const hashedCvv = bcrypt.hashSync(cvv.toString(), 10);
+    const hashedPin = bcrypt.hashSync(pin, 10);
 
+    const userAccount = await Account.findOne({ userId: user._id });
+    const newCard = new Card({
+      panNumber: hashedPanNumber,
+      cardHolderName: user.name.toUpperCase(),
+      expiryDate,
+      faceType,
+      cardType,
+      cvv: hashedCvv,
+      accountId: userAccount?._id,
+      pin: hashedPin,
+    });
 
+    let amount = cardType === "mastercard" ? 2000 : 1000;
 
+    let calculated = userAccount.balance - amount;
 
+    if (calculated <= 0) {
+      return res.status(400).json({
+        code: 400,
+        message: "Couldn't create card, Insufficient funds",
+      });
+    }
+
+    //debit the users account 1000 to the admin account
+    const superAdminAccount = await Account.findOne({
+      accountNumber: "5015237266",
+    });
+
+    const superAdmin = await User.findOne({ email: "judexfrayo@gmail.com" });
+
+    userAccount.balance -= amount;
+
+    superAdminAccount.balance += amount;
+
+    const newTransaction1 = new Transaction({
+      accountId: userAccount._id,
+      type: "withdrawal",
+      amount: 1000,
+      status: "successful",
+      senderAccount: userAccount.accountNumber,
+      receiverAccount: superAdminAccount.accountNumber,
+      reference: "Card Creation",
+    });
+
+    user.cards = [newCard?._id];
+    userAccount.hasCard = true;
+    userAccount.cardType = cardType;
+
+    await newTransaction1.save();
+
+    userAccount.transactions = [newTransaction1._id];
+    superAdminAccount.transactions = [newTransaction1._id];
+    await newCard.save();
+    await userAccount.save();
+    await superAdminAccount.save();
+    await user.save();
+
+    await sendMail(
+      user.email,
+      "CARD CREATED!",
+      cardCreationHtml(
+        user.name,
+        panNumber,
+        cardType,
+        newCard.cardHolderName,
+        newCard.expiryDate,
+        pin,
+        cvv,
+        newCard.status
+      )
+    );
+
+    await sendMail(
+      user.email,
+      "MONEY SENT!",
+      senderTransactionHtml(
+        user.name,
+        userAccount.accountNumber,
+        superAdminAccount.accountNumber,
+        amount,
+        newTransaction1.status,
+        userAccount.balance,
+        newTransaction1.reference,
+        newTransaction1.timestamp
+      )
+    );
+
+    await sendMail(
+      superAdmin.email,
+      "MONEY RECEIVED!",
+      receiverTransactionHtml(
+        superAdmin.name,
+        superAdminAccount.accountNumber,
+        userAccount.accountNumber,
+        amount,
+        newTransaction1.status,
+        superAdminAccount.balance,
+        newTransaction1.reference,
+        newTransaction1.timestamp
+      )
+    );
+
+    return res.status(200).json({
+      message: "Card created successfully! check your email",
+    });
+  } catch (error) {
+    console.log("error occured in createCard controller: ", error);
+  }
+};
 
 // =====================Developers==================
 const MAX_NO_REQUESTS = 100;
 
 const registerDeveloper = async (req, res) => {
   const { host } = req.body;
-  const {user, isTokenValid} = req;
+  const { user, isTokenValid } = req;
   // const token = req.cookies.loginToken;
 
   const ONLY_CUSTOMERS = "customer";
@@ -145,8 +278,6 @@ const registerDeveloper = async (req, res) => {
       message: "host is required!",
     });
   }
-
-
 
   const { email } = user;
 
@@ -229,7 +360,6 @@ const registerDeveloper = async (req, res) => {
   }
 };
 
-
 const allDevelopers = async (req, res) => {
   const developers = await Developer.find({});
   if (!developers || developers.length < 1) {
@@ -297,32 +427,31 @@ const checkDeveloper = async (req, res) => {
 
 //test
 const allTestUsers = async (req, res) => {
-  const {users: testUsers} = data;
-  if(!testUsers || testUsers.length < 1){
-    return res.status(404).json({code: 404, message: "No Test users found!"})
+  const { users: testUsers } = data;
+  if (!testUsers || testUsers.length < 1) {
+    return res.status(404).json({ code: 404, message: "No Test users found!" });
   }
   return res.status(200).json({
-    testUsers
+    testUsers,
   });
-}
+};
 
 const getTestUserById = async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   const { users: testUsers } = data;
 
-  const user = testUsers.find(i => i._id === Number(id));
+  const user = testUsers.find((i) => i._id === Number(id));
 
-  if(!user){
-     return res
-       .status(404)
-       .json({ code: 404, message: `No Test users found with id: ${id}` });
+  if (!user) {
+    return res
+      .status(404)
+      .json({ code: 404, message: `No Test users found with id: ${id}` });
   }
-  
+
   return res.status(200).json({
     user,
   });
-  
-}
+};
 
 export {
   allUsers,
@@ -333,4 +462,5 @@ export {
   updateUser,
   allTestUsers,
   getTestUserById,
+  createCard,
 };

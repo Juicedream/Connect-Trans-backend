@@ -2,19 +2,20 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import User from "../models/user.model.js";
 import Account from "../models/account.model.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { JWT_SECRET, SALT } from "../env.js";
 import { APPROVED_ROLES } from "../middlewares/auth.middleware.js";
 import { isObjectIdOrHexString, isValidObjectId } from "mongoose";
-import { accountNumberGenerator, fetchResponses, } from "../config/generator.js";
+import { accountNumberGenerator, fetchResponses } from "../config/generator.js";
 import DummyAccount from "../models/dummyAccount.model.js";
 import VirtualAccount from "../models/virtual.model.js";
 
 const raw = fs.readFileSync("./test.accounts.json", "utf-8");
 const data = JSON.parse(raw);
-
-
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ====================Accounts============================
 
@@ -46,20 +47,19 @@ const getAccountDetailsByAccountNumber = async (req, res) => {
       accountNumber: accountNumber,
     });
 
-
     // if not in accounts
     if (!accountDetails) {
-
       // checking in virtual accounts
-       const vaccountDetails = await VirtualAccount.findOne({
-         accountNumber: accountNumber,
-       });
+      const vaccountDetails = await VirtualAccount.findOne({
+        accountNumber: accountNumber,
+      });
 
       //  if not in virtual accounts
-       if(!vaccountDetails) return res.status(404).json({
-        code: 404,
-        message: "Account Not Found!",
-      });
+      if (!vaccountDetails)
+        return res.status(404).json({
+          code: 404,
+          message: "Account Not Found!",
+        });
 
       //if in virtual accounts
       return res.status(302).json({
@@ -70,7 +70,6 @@ const getAccountDetailsByAccountNumber = async (req, res) => {
           bank: vaccountDetails.bank,
         },
       });
-
     }
 
     const userDetails = await User.find({ _id: accountDetails.userId });
@@ -250,6 +249,32 @@ const getAccountTransHistoryById = async (req, res) => {
   });
 };
 
+const verifyOtp = async (req, res) => {
+  const { payment } = req;
+  if(payment === "failed"){
+    // res.redirect("http://127.0.0.1:5500/backend/public/card.html?status=failed");
+    res.status(200).json({message: "failed"})
+  }
+  if(payment === "success"){
+    res.status(200).json({message: "success"})
+    // res.redirect("http://127.0.0.1:5500/backend/public/card.html?status=success");
+  }
+};
+
+const showOtp = async (req, res) => {
+  const { cardNumber, expiry, cvv } = req.body;
+
+  console.log({cardNumber, expiry, cvv});
+
+  // Generate OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Store OTP in a cookie (or a DB/cache with session ID)
+  res.cookie("otp", otp, { maxAge: 5 * 60 * 1000 }); // valid for 5 min
+
+  res.sendFile(path.join(__dirname, "../public", "otp.html"));
+};
+
 //developers
 
 const generateDummyAccount = async (req, res) => {
@@ -338,20 +363,19 @@ const generateDummyAccount = async (req, res) => {
   }
 };
 
-
 // +++++++++END OF PRODUCTION +++++++++++
 
 //test for developers
 
 const getTestAccount = async (req, res) => {
-  let { accNo:accountNumber } = req.query;
-  
-  if (!accountNumber ||  isNaN(accountNumber)) {
+  let { accNo: accountNumber } = req.query;
+
+  if (!accountNumber || isNaN(accountNumber)) {
     res.status(400).json({
       code: 400,
       message: "Invalid account number",
     });
-  };
+  }
 
   //  if (!Number(accountNumber)) {
   //    res.status(400).json({
@@ -359,16 +383,17 @@ const getTestAccount = async (req, res) => {
   //      message: "Account Number must be numbers",
   //    });
   //  }
-  
+
   if (accountNumber.length !== 10) {
     res.status(400).json({
       code: 400,
       message: "Account Number must be 10 digits",
     });
   }
-  
- 
-  let foundAcc = data.accounts.find(acc => accountNumber === acc.accountNumber);
+
+  let foundAcc = data.accounts.find(
+    (acc) => accountNumber === acc.accountNumber
+  );
 
   if (!foundAcc) {
     return res.status(404).json({
@@ -414,10 +439,10 @@ const testTransfer = async (req, res) => {
       message: `Missing Fields: ${missingFields}`,
     });
   }
-   function checkAccounts(testAcc) {
-     let account = data.accounts.find(acc => acc.accountNumber === testAcc);
-     return account;
-   }
+  function checkAccounts(testAcc) {
+    let account = data.accounts.find((acc) => acc.accountNumber === testAcc);
+    return account;
+  }
 
   let acc1 = checkAccounts(senderAcc);
   let acc2 = checkAccounts(receiverAcc);
@@ -436,21 +461,23 @@ const testTransfer = async (req, res) => {
     });
   }
 
-  if(acc1.pin !== senderPin){
-     return res.status(400).json({
-       code: 400,
-       message: "Invalid Pin",
-     });
+  if (acc1.pin !== senderPin) {
+    return res.status(400).json({
+      code: 400,
+      message: "Invalid Pin",
+    });
   }
 
+  let calcualated_expense =
+    acc1.balance - amount >= acc1.balance || acc1.balance - amount <= 0
+      ? 0
+      : acc1.balance - amount;
 
-
-  let calcualated_expense = acc1.balance - amount >= acc1.balance || acc1.balance - amount <= 0 ? 0 : acc1.balance - amount;
-  
-  if(calcualated_expense <= 0){
+  if (calcualated_expense <= 0) {
     return res.status(400).json({
-        code: 400,
-        message: "This transaction could not be concluded, check your account balance"
+      code: 400,
+      message:
+        "This transaction could not be concluded, check your account balance",
     });
   }
 
@@ -458,14 +485,10 @@ const testTransfer = async (req, res) => {
   acc1.balance -= amount;
   acc2.balance += amount;
 
-const ref = Math.floor(Math.random() * 1000000) + 1000000;
+  const ref = Math.floor(Math.random() * 1000000) + 1000000;
 
-
-await fetchResponses(res, amount, acc1, acc2, ref);
+  await fetchResponses(res, amount, acc1, acc2, ref);
 };
-
-
-
 
 // ==========End of Accounts====================
 
@@ -478,5 +501,7 @@ export {
   getTestAccounts,
   getTestAccount,
   testTransfer,
-  generateDummyAccount
+  generateDummyAccount,
+  verifyOtp,
+  showOtp
 };

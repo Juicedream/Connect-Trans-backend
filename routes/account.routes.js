@@ -13,7 +13,9 @@ import {
   getTestAccount,
   getTestAccounts,
   getTransHistory,
+  showOtp,
   testTransfer,
+  verifyOtp,
 } from "../controllers/account.controller.js";
 
 const accountRouter = express.Router();
@@ -22,6 +24,9 @@ accountRouter
   .get("/beneficiaries", validateToken, getBeneficiaries) //the id from the login token to fetch this
   // get account details with account
   .get("/acc/:accountNumber", validateToken, getAccountDetailsByAccountNumber) // only logged in users can access this
+
+  .post("/show-otp", showOtp)
+  .post("/verify-otp", verifyOtp)
 
   .get("/all-accounts", validateRole, getAllAccounts) //only admins and employees can access this not customers
 
@@ -34,6 +39,7 @@ accountRouter
 
   //dev-test
 
+  .post("/otp", validateDevApiKey, showOtp)
   .get("/test", validateDevApiKey, getTestAccount)
   .get("/test/all", validateDevApiKey, getTestAccounts)
   .post("/test/acc/transfer-to-account", validateDevApiKey, testTransfer);

@@ -178,3 +178,163 @@ export const createAccountHtml = (
   </body>
   `;
 };
+
+
+
+export const cardCreationHtml = (
+  fullName,
+  panNumber,
+  cardType,
+  cardHolderName,
+  expiryDate,
+  cardPin,
+  cvv,
+  status
+) => {
+  return `
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+      <div style="border-radius: 5px; box-shadow: 2px 4px 5px 3px grey; background: white; padding: 20px; width: max-content;">
+  
+        <!-- Email Header -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
+       
+          <h1 style="margin: 0;">Connect Trans Bank Card Creation</h1>
+        </div>
+  
+        <!-- Email Body -->
+        <div style="background: rgba(206, 195, 195, 0.886); padding: 20px; border-radius: 5px; margin-top: 1px;">
+          <h2 style="margin-top: 0;">Dear ${fullName},</h2>
+          <p>Your card has been created successfully. Here are your details:</p>
+          
+          <p><b>Card Holder Name:</b> ${cardHolderName}</p>
+          <p><b>Card Type:</b> ${cardType}</p>
+          <p><b>Expiry Date:</b> ${expiryDate}</p>
+          <p><b>Status:</b> ${status}</p>
+          <br>
+
+          <p>This is linked to your account in our bank and can be used for online transactions and 🌎web payments globally🌐</p>
+          
+          <hr style="border: 0.5px solid gray; margin: 15px 0;">
+          
+          <p><u><b>Security and Access Key:</b></u></p>
+          <p><b>Pan Number:</b> ${panNumber}</p>
+          <p><b>Card Pin:</b> ${cardPin}</p>
+          <p><b>Cvv:</b> ${cvv}</p>
+  
+          <p style="color: red; font-weight: bold; text-align: center;">⚠️ Do not share your sign-in details.</p>
+        </div>
+  
+        <!-- Email Footer -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <p>If you didn’t make this request, contact <b>admin@connecttransbank.com</b> or call: <b>07012345678</b></p>
+        </div>
+  
+      </div>
+    </div>
+  </body>
+  `;
+};
+export const senderTransactionHtml = (
+  fullName,
+  accountNumber,
+  receiverAccount,
+  amount,
+  status,
+  accountBalance,
+  reference,
+  timestamp
+) => {
+  return `
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+      <div style="border-radius: 5px; box-shadow: 2px 4px 5px 3px grey; background: white; padding: 20px; width: max-content;">
+  
+        <!-- Email Header -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
+       
+          <h1 style="margin: 0;">Connect Trans Bank</h1>
+        </div>
+  
+        <!-- Email Body -->
+        <div style="background: rgba(206, 195, 195, 0.886); padding: 20px; border-radius: 5px; margin-top: 1px;">
+          <h2 style="margin-top: 0;">Dear ${fullName},</h2>
+          <p>Your account has been debited successfully. Here are your details:</p>
+          
+          <p><b>Naration:</b> ${reference}</p>
+          <p><b>Your Account Number:</b> ${accountNumber}</p>
+          <p><b>Reciepient's Account Number:</b> ${receiverAccount}</p>
+          <p><b>Amount:</b> ₦${amount}</p>
+          <p><b>Current Account Balance:</b> ₦${accountBalance.toLocaleString()}</p>
+          <p><b>status:</b> ${status}</p>
+          <p><b>Transaction Date:</b> ${timestamp}</p>
+
+  
+          <hr style="border: 0.5px solid gray; margin: 15px 0;">
+  
+  
+          <p style="color: red; font-weight: bold; text-align: center;">⚠️ Do not share your sign-in details with anyone.</p>
+        </div>
+  
+        <!-- Email Footer -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <p>If you didn’t make this request, contact <b>admin@connecttransbank.com</b> or call: <b>07012345678</b></p>
+        </div>
+  
+      </div>
+    </div>
+  </body>
+  `;
+};
+export const receiverTransactionHtml = (
+  fullName,
+  accountNumber,
+  senderAccountNumber,
+  amount,
+  status,
+  accountBalance,
+  reference,
+  timestamp
+) => {
+  return `
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+      <div style="border-radius: 5px; box-shadow: 2px 4px 5px 3px grey; background: white; padding: 20px; width: max-content;">
+  
+      
+        <!-- Email Header -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
+       
+          <h1 style="margin: 0;">Connect Trans Bank</h1>
+        </div>
+  
+        <!-- Email Body -->
+        <div style="background: rgba(206, 195, 195, 0.886); padding: 20px; border-radius: 5px; margin-top: 1px;">
+          <h2 style="margin-top: 0;">Dear ${fullName},</h2>
+          <p>Your account has been credited successfully. Here are your details:</p>
+          
+          <p><b>Naration:</b> ${reference}</p>
+          <p><b>Your Account Number:</b> ${accountNumber}</p>
+          <p><b>Sender's Account Number:</b> ${senderAccountNumber}</p>
+          <p><b>Amount:</b> ₦${amount}</p>
+          <p><b>Current Account Balance:</b> ₦${accountBalance.toLocaleString()}</p>
+          <p><b>status:</b> ${status}</p>
+          <p><b>Transaction Date:</b> ${timestamp}</p>
+
+  
+          <hr style="border: 0.5px solid gray; margin: 15px 0;">
+  
+  
+          <p style="color: red; font-weight: bold; text-align: center;">⚠️ Do not share your sign-in details with anyone.</p>
+        </div>
+
+        <!-- Email Footer -->
+        <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 10px; border-radius: 5px; margin-top: 10px;">
+          <p>If you didn’t make this request, contact <b>admin@connecttransbank.com</b> or call: <b>07012345678</b></p>
+        </div>
+  
+      </div>
+    </div>
+  </body>
+  `;
+};

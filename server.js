@@ -5,6 +5,8 @@ import http from "http";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit"
 import cron from "node-cron";
+import path from "path";
+import { fileURLToPath } from "url";
 
 
 import adminRouter from "./routes/admin.routes.js";
@@ -23,6 +25,9 @@ const TRY_AGAIN_AFTER_MINS = 15;
 const MAX_NO_REQUESTS = 10;
 const LIMIT_MESSAGE = `Too many requests. Try again after ${TRY_AGAIN_AFTER_MINS} mins`;
 
+// __dirname workaround for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -37,6 +42,8 @@ const limiter = rateLimit({
     message: LIMIT_MESSAGE
 });
 
+
+
 // clears default password after 10 mins
 cron.schedule(`*/${TIME} * * * *`, () => {
   console.log("Running Background Job with cron \n*3");
@@ -44,12 +51,16 @@ cron.schedule(`*/${TIME} * * * *`, () => {
 });
 
 
+express.static(path.join(__dirname, "public"));
+
 app.use(cors());
 app.use(cookieParser())
 app.use(express.json()); // Middleware to parse JSON requests
 
+
 app.get("/", (req, res) => {
-    res.send("Welcome to connect trans backend api v1");
+    // res.send("Welcome to connect trans backend api v1");
+     res.sendFile(path.join(__dirname, "public", "index.html"));
 })
 
 

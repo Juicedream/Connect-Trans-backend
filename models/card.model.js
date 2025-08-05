@@ -41,6 +41,10 @@ const CardSchema = new Schema(
       ref: "Account", // Links the card to an account
       required: true,
     },
+    pin:{
+      type: String,
+      required: true
+    }
   },
   { timestamps: true } // Adds createdAt & updatedAt
 );

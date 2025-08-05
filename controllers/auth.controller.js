@@ -107,25 +107,7 @@ const createAccount = async (req, res) => {
 
     newUser.accounts = [newAccount?._id];
 
-    // creating card
-    // const panNumber = generatePanNumber(cardType) //based on card type;
-    // const expiryDate = generateExpiryDate();
-    // const cvv = cvvGenerator();
-
-    // const hashedPanNumber = bcrypt.hashSync(panNumber.toString(), 10);
-    // const hashedCvv = bcrypt.hashSync(cvv.toString(), 10);
-
-    // const newCard = new Card({
-    //   panNumber: hashedPanNumber,
-    //   cardHolderName: name.toUpperCase(),
-    //   expiryDate,
-    //   cardType,
-    //   faceType,
-    //   cvv: hashedCvv,
-    //   accountId: newAccount?._id,
-    // });
-
-    // newUser.cards = [newCard?._id];
+  
 
     if (!email) {
       console.log("email is undefined");
@@ -133,7 +115,7 @@ const createAccount = async (req, res) => {
       try {
         await newUser.save();
         await newAccount.save();
-        // await newCard.save();
+      
         await sendMail(
           email,
           "Account Creation Successful",
@@ -361,6 +343,8 @@ const changePassword = async (req, res) => {
   
 
 }
+
+
 
 
 

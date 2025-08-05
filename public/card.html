@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Card Details</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.4.2/dist/full.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="flex items-center justify-center min-h-screen bg-base-200"
+    data-theme="dark"
+  >
+    <div class="justify-center w-full flex" id="loader">
+      <span class="loading loading-spinner flex items-center loading-xl"></span>
+    </div>
+    <div class="card w-full max-w-sm bg-base-100 shadow-xl" id="form">
+      <div class="card-body">
+        <h2 class="card-title">Enter Card Details</h2>
+        <form
+          method="POST"
+          action="http://localhost:3000/api/v1/account/show-otp"
+          class="space-y-4"
+        >
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Card Number</span>
+            </label>
+            <input
+              type="text"
+              name="cardNumber"
+              placeholder="1234 5678 9012 3456"
+              class="input input-bordered"
+              required
+              maxlength="19"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">Expiry Date</span>
+              </label>
+              <input
+                type="text"
+                name="expiry"
+                placeholder="MM/YY"
+                class="input input-bordered"
+                required
+                maxlength="5"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">CVV</span>
+              </label>
+              <input
+                type="text"
+                name="cvv"
+                placeholder="123"
+                class="input input-bordered"
+                required
+                maxlength="4"
+              />
+            </div>
+          </div>
+
+          <div class="form-control mt-6">
+            <button type="submit" class="btn btn-primary">Proceed</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("form");
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get("status");
+      const messageDiv = document.getElementById("statusMessage");
+      const loader = document.getElementById("loader");
+
+      loader.classList.add("hidden");
+
+      if (status) {
+        loader.classList.remove("hidden");
+        function closeModal() {
+          form.classList.add("hidden");
+        }
+        form.classList.add("hidden");
+        setTimeout(() => {
+          if (status === "success") {
+            loader.classList.add("hidden");
+            form.classList.remove("hidden");
+            form.innerHTML = `
+           <div class="card bg-success text-primary-content w-96">
+                <div class="card-body">
+                    <h2 class="card-title text-center">✅</h2>
+                    <p>Payment was successful!</p>
+                    <div class="card-actions justify-end">
+                    <button class="btn" onclick="closeModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+            `;
+          }
+          if (status === "failed") {
+            loader.classList.add("hidden");
+            form.classList.remove("hidden");
+            form.innerHTML = `
+           <div class="card bg-error text-primary-content w-96">
+                <div class="card-body">
+                    <h2 class="card-title text-center">❌</h2>
+                    <p>Payment was not successful!</p>
+                    <div class="card-actions justify-end">
+                    <button class="btn" onclick="closeModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+            `;
+          }
+        }, 4000);
+      }
+    </script>
+  </body>
+</html>
