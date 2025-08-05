@@ -1,4 +1,6 @@
-import { nigerianStates } from "../../data.js";
+// import { nigerianStates } from "../../data.js";
+
+import { nigerianStates } from "../data.js";
 
 const cardFaceTypes = [
   "regular",
