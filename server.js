@@ -21,8 +21,8 @@ import { clearAllDefaultPasswords, TIME } from "./controllers/auth.controller.js
 
 
 
-const TRY_AGAIN_AFTER_MINS = 15;
-const MAX_NO_REQUESTS = 10;
+const TRY_AGAIN_AFTER_MINS = 5;
+const MAX_NO_REQUESTS = 1000;
 const LIMIT_MESSAGE = `Too many requests. Try again after ${TRY_AGAIN_AFTER_MINS} mins`;
 
 // __dirname workaround for ES modules
@@ -52,6 +52,8 @@ cron.schedule(`*/${TIME} * * * *`, () => {
 
 
 express.static(path.join(__dirname, "public"));
+
+app.set("trust proxy", true);
 
 app.use(cors());
 app.use(cookieParser())
