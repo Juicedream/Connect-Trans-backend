@@ -1,5 +1,4 @@
 import express from "express"
-import {PORT} from "./env.js"
 import cors from 'cors'
 import http from "http";
 import cookieParser from "cookie-parser";
@@ -7,17 +6,18 @@ import rateLimit from "express-rate-limit"
 import cron from "node-cron";
 import path from "path";
 import { fileURLToPath } from "url";
-
-
-import adminRouter from "./routes/admin.routes.js";
-import employeeRouter from "./routes/employee.routes.js";
+import { NODE_ENV, PORT } from "./env.js"
+import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import accountRouter from "./routes/account.routes.js";
+import { validateRole } from "./middlewares/auth.middleware.js";
+import employeeRouter from "./routes/employee.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 import errorHandler from "./middlewares/errorhandler.middleware.js";
 import connectDB from "./config/db.config.js";
-import authRouter from "./routes/auth.routes.js";
-import { validateRole } from "./middlewares/auth.middleware.js";
-import accountRouter from "./routes/account.routes.js";
 import { clearAllDefaultPasswords, TIME } from "./controllers/auth.controller.js";
+
+
 
 
 
@@ -84,6 +84,10 @@ app.use(errorHandler);
 //connecting to database
 connectDB()
 
-app.listen(port, () => {
-    console.log(`Server running on ${port}...`);
-})
+
+if(NODE_ENV !== "production"){
+    app.listen(port, () => {
+        console.log(`Server running on ${port}...`);
+    })
+
+}

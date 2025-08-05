@@ -11,6 +11,7 @@ import { isObjectIdOrHexString, isValidObjectId } from "mongoose";
 import { accountNumberGenerator, fetchResponses } from "../config/generator.js";
 import DummyAccount from "../models/dummyAccount.model.js";
 import VirtualAccount from "../models/virtual.model.js";
+import Transaction from "../models/transactions.model.js";
 
 const raw = fs.readFileSync("./test.accounts.json", "utf-8");
 const data = JSON.parse(raw);
@@ -171,8 +172,14 @@ const getTransHistory = async (req, res) => {
     });
   }
 
+ 
+  const allTransactions = await Promise.all(
+    transactions.map((tran) => Transaction.findById(tran.toString()))
+  );
+
+  // console.log(allTransactions);
   return res.status(200).json({
-    transactions,
+    transactions: allTransactions,
   });
 };
 
@@ -251,12 +258,12 @@ const getAccountTransHistoryById = async (req, res) => {
 
 const verifyOtp = async (req, res) => {
   const { payment } = req;
-  if(payment === "failed"){
+  if (payment === "failed") {
     // res.redirect("http://127.0.0.1:5500/backend/public/card.html?status=failed");
-    res.status(200).json({message: "failed"})
+    res.status(200).json({ message: "failed" });
   }
-  if(payment === "success"){
-    res.status(200).json({message: "success"})
+  if (payment === "success") {
+    res.status(200).json({ message: "success" });
     // res.redirect("http://127.0.0.1:5500/backend/public/card.html?status=success");
   }
 };
@@ -264,7 +271,7 @@ const verifyOtp = async (req, res) => {
 const showOtp = async (req, res) => {
   const { cardNumber, expiry, cvv } = req.body;
 
-  console.log({cardNumber, expiry, cvv});
+  console.log({ cardNumber, expiry, cvv });
 
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -503,5 +510,5 @@ export {
   testTransfer,
   generateDummyAccount,
   verifyOtp,
-  showOtp
+  showOtp,
 };
