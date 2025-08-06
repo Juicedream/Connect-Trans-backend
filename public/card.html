@@ -12,18 +12,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body
-    class="flex items-center justify-center min-h-screen bg-base-200"
-    data-theme="dark"
+    class="flex flex-col items-center justify-center min-h-screen bg-base-200"
+    data-theme="forest"
   >
-    <div class="justify-center w-full flex" id="loader">
-      <span class="loading loading-spinner flex items-center loading-xl"></span>
-    </div>
+   
     <div class="card w-full max-w-sm bg-base-100 shadow-xl" id="form">
       <div class="card-body">
         <h2 class="card-title">Enter Card Details</h2>
         <form
-          method="POST"
-          action="http://localhost:3000/api/v1/account/show-otp"
+        id="cardForm"
           class="space-y-4"
         >
           <div class="form-control">
@@ -32,11 +29,11 @@
             </label>
             <input
               type="text"
-              name="cardNumber"
               placeholder="1234 5678 9012 3456"
               class="input input-bordered"
+              name="panNumber"
               required
-              maxlength="19"
+             
             />
           </div>
 
@@ -47,11 +44,10 @@
               </label>
               <input
                 type="text"
-                name="expiry"
+                name="expiryDate"
                 placeholder="MM/YY"
                 class="input input-bordered"
                 required
-                maxlength="5"
               />
             </div>
 
@@ -65,13 +61,12 @@
                 placeholder="123"
                 class="input input-bordered"
                 required
-                maxlength="4"
               />
             </div>
           </div>
 
           <div class="form-control mt-6">
-            <button type="submit" class="btn btn-primary">Proceed</button>
+            <button type="submit" id="btn" class="btn btn-primary">Proceed</button>
           </div>
         </form>
       </div>
@@ -79,52 +74,154 @@
 
     <script>
       const form = document.getElementById("form");
+      const cardForm = document.getElementById("cardForm");
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get("status");
       const messageDiv = document.getElementById("statusMessage");
       const loader = document.getElementById("loader");
+      let button = document.querySelector("#btn");
 
-      loader.classList.add("hidden");
+      
 
-      if (status) {
-        loader.classList.remove("hidden");
-        function closeModal() {
-          form.classList.add("hidden");
+      // loader.classList.add("hidden");
+
+      form.addEventListener("submit", handleSubmit)
+     async function handleSubmit (e){
+        e.preventDefault();
+        button.innerHTML = `
+          <div class="justify-center w-full flex" id="loader">
+          <span class="loading loading-spinner flex items-center loading-xl"></span>
+          </div>
+        `
+        // get the values from the form
+        const form = new FormData(cardForm);
+
+        let panNumber = form.get("panNumber")
+        let expiryDate = form.get("expiryDate")
+        let cvv = form.get("cvv")
+
+        let payload = JSON.stringify({panNumber, expiryDate, cvv, receiverAcc: "3012972318", receiverBank:"ConnectTrans Bank", amount:"120000"})
+
+        let apiKey = "123456";
+
+        // sending payload to endpoint
+        console.log(payload);
+
+        try {
+          const ERROR_CODES = [400, 401, 402, 403, 404, 409] 
+          const headers = new Headers();
+          headers.append("Content-Type", "application/json");
+          headers.append("x-api-key", apiKey);
+
+          function setOptions (method, body) {
+             const options = {
+            method: method,
+            headers,
+            body: body,
+            // credentials: "include",
+            // redirect: "follow"
+          }
+          return options
+          }
+
+         let data = await fetch("https://connect-trans-backend.onrender.com/api/v1/account/otp", setOptions("POST", payload))
+
+         if(!data.ok){
+          button.textContent = "Proceed"
+         }
+         let response = await data.json()
+         if(ERROR_CODES.includes(response.code)){
+          button.textContent = "Proceed"
+         console.log(response.code);
+         console.log(response.message);
+          return;
+         }
+
+
+               
+         console.log(response);
+         console.log(response.code);
+         console.log(response.message);
+
+         window.open(response.link, "_blank", "width=420, height=400")
+         const RUN_EVERY = 40000 //every 40 secs
+         let statusChecker = setInterval(async () => {
+           let paymentResponse = await fetch(`https://connect-trans-backend.onrender.com/api/v1/account/check-transaction-status/${response.tran_id}`, setOptions("GET"))
+
+            console.log("Payment still pending...")
+           let check = await paymentResponse.json();
+
+           if(check.transaction.status === "successful"){
+            clearInterval(statusChecker)
+            console.log("payment confirmed");
+            button.textContent = "Proceed"
+           }
+           if(check.transaction.status === "failed"){
+            clearInterval(statusChecker)
+            console.log("payment failed");
+            button.textContent = "Proceed"
+           }
+
+           
+          
+
+
+
+         },RUN_EVERY)
+
+
+        
+  
+
+
+
+        } catch (error) {
+          console.log("fetch error:",error.message);
         }
-        form.classList.add("hidden");
-        setTimeout(() => {
-          if (status === "success") {
-            loader.classList.add("hidden");
-            form.classList.remove("hidden");
-            form.innerHTML = `
-           <div class="card bg-success text-primary-content w-96">
-                <div class="card-body">
-                    <h2 class="card-title text-center">✅</h2>
-                    <p>Payment was successful!</p>
-                    <div class="card-actions justify-end">
-                    <button class="btn" onclick="closeModal()">Close</button>
-                    </div>
-                </div>
-            </div>
-            `;
-          }
-          if (status === "failed") {
-            loader.classList.add("hidden");
-            form.classList.remove("hidden");
-            form.innerHTML = `
-           <div class="card bg-error text-primary-content w-96">
-                <div class="card-body">
-                    <h2 class="card-title text-center">❌</h2>
-                    <p>Payment was not successful!</p>
-                    <div class="card-actions justify-end">
-                    <button class="btn" onclick="closeModal()">Close</button>
-                    </div>
-                </div>
-            </div>
-            `;
-          }
-        }, 4000);
       }
+
+     
+
+
+      // if (status) {
+      //   loader.classList.remove("hidden");
+      //   function closeModal() {
+      //     form.classList.add("hidden");
+      //   }
+      //   form.classList.add("hidden");
+      //   setTimeout(() => {
+      //     if (status === "success") {
+      //       loader.classList.add("hidden");
+      //       form.classList.remove("hidden");
+      //       form.innerHTML = `
+      //      <div class="card bg-success text-primary-content w-96">
+      //           <div class="card-body">
+      //               <h2 class="card-title text-center">✅</h2>
+      //               <p>Payment was successful!</p>
+      //               <div class="card-actions justify-end">
+      //               <button class="btn" onclick="closeModal()">Close</button>
+      //               </div>
+      //           </div>
+      //       </div>
+      //       `;
+      //     }
+      //     if (status === "failed") {
+      //       loader.classList.add("hidden");
+      //       form.classList.remove("hidden");
+      //       form.innerHTML = `
+      //      <div class="card bg-error text-primary-content w-96">
+      //           <div class="card-body">
+      //               <h2 class="card-title text-center">❌</h2>
+      //               <p>Payment was not successful!</p>
+      //               <div class="card-actions justify-end">
+      //               <button class="btn" onclick="closeModal()">Close</button>
+      //               </div>
+      //           </div>
+      //       </div>
+      //       `;
+      //     }
+      //   }, 4000);
+      // }
     </script>
   </body>
 </html>

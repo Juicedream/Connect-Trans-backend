@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import fs from "fs";
+import fs, { stat } from "fs";
+import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 import Account from "../models/account.model.js";
 import path from "path";
@@ -8,15 +9,23 @@ import { fileURLToPath } from "url";
 import { JWT_SECRET, SALT } from "../env.js";
 import { APPROVED_ROLES } from "../middlewares/auth.middleware.js";
 import { isObjectIdOrHexString, isValidObjectId } from "mongoose";
-import { accountNumberGenerator, fetchResponses } from "../config/generator.js";
+import {
+  accountNumberGenerator,
+  checkIfCardhasExpired,
+  fetchResponses,
+} from "../config/generator.js";
 import DummyAccount from "../models/dummyAccount.model.js";
 import VirtualAccount from "../models/virtual.model.js";
 import Transaction from "../models/transactions.model.js";
+import Card from "../models/card.model.js";
+import { transferableAbortSignal } from "util";
 
 const raw = fs.readFileSync("./test.accounts.json", "utf-8");
 const data = JSON.parse(raw);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const APPROVED_CARD_STATUS = "active";
 
 // ====================Accounts============================
 
@@ -172,7 +181,6 @@ const getTransHistory = async (req, res) => {
     });
   }
 
- 
   const allTransactions = await Promise.all(
     transactions.map((tran) => Transaction.findById(tran.toString()))
   );
@@ -257,7 +265,72 @@ const getAccountTransHistoryById = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-  const { payment } = req;
+  const { otp } = req.body;
+  if(!otp){
+    return res.status(400).json({
+      code: 400,
+      message: "Otp is required!",
+    });
+  }
+
+  if(otp.length !== 6){
+    return res.status(400).json({
+      code: 400,
+      message: "Kindly provide the right six digits",
+    });
+  }
+  
+  let accounts = await Account.findOne({otpCode: otp});
+
+  let foundAccount = accounts;
+ 
+  if(!foundAccount){
+    return res.status(404).json({
+      code: 404,
+      message: "No Account found",
+    });
+  }
+ 
+
+
+  let status = ["failed", "successful"];
+  const idx = Math.floor(Math.random() * 2);
+  let statusMessage = status[idx];
+
+  console.log(statusMessage)
+
+  let tran_id = foundAccount.transactions[foundAccount.transactions.length - 1];
+  console.log("transactions", foundAccount.transactions);
+  console.log("last transaction", tran_id);
+
+  let transaction = await Transaction.findById(tran_id);
+
+  if(!transaction){
+     return res.status(404).json({
+       code: 404,
+       message: `No transactions found for this id: ${tran_id}`,
+     });
+  }
+
+  foundAccount.hasOtp = false
+  foundAccount.otpCode = "";
+
+  transaction.status = statusMessage;
+  
+  await foundAccount.save();
+  await transaction.save();
+
+  return res.status(200).json({
+    foundAccount,
+    transaction,
+    message: `Payment ${statusMessage}`
+  });
+
+
+
+
+
+
   if (payment === "failed") {
     // res.redirect("http://127.0.0.1:5500/backend/public/card.html?status=failed");
     res.status(200).json({ message: "failed" });
@@ -269,17 +342,193 @@ const verifyOtp = async (req, res) => {
 };
 
 const showOtp = async (req, res) => {
-  const { cardNumber, expiry, cvv } = req.body;
+  const { panNumber, expiryDate, cvv, receiverAcc, receiverBank, amount } =
+    req.body;
+  res.clearCookie("otp");
 
-  console.log({ cardNumber, expiry, cvv });
+  if (
+    !panNumber ||
+    !expiryDate ||
+    !cvv ||
+    !receiverAcc ||
+    !receiverBank ||
+    !amount
+  ) {
+    return res.status(400).json({
+      code: 400,
+      message: "All fields are required!",
+    });
+  }
 
+  console.log({ panNumber, expiryDate, cvv });
+
+  // Validate expiryDate format: MM/YY
+  const expiryDateFormat = /^\d{2}\/\d{2}$/;
+  if (!expiryDateFormat.test(expiryDate)) {
+    return res.status(400).json({
+      code: 400,
+      message: "Invalid expiryDate format!",
+    });
+  }
+
+  // Validate CVV length
+  if (cvv.length !== 3 || isNaN(cvv)) {
+    return res.status(400).json({
+      code: 400,
+      message: "CVV must be exactly 3 digits",
+    });
+  }
+
+  // Get cards
+  const cards = await Card.find({});
+  if (!cards || cards.length === 0) {
+    return res.status(400).json({
+      code: 400,
+      message: "No cards found",
+    });
+  }
+
+  // Check if card exists
+  let matchedCard = null;
+  for (const card of cards) {
+    const isMatched = await bcrypt.compare(panNumber, card.panNumber);
+    if (isMatched) {
+      matchedCard = card;
+      break;
+    }
+  }
+
+  if (!matchedCard) {
+    return res.status(404).json({
+      code: 404,
+      message: "Card not found or invalid PAN",
+    });
+  }
+
+  console.log("Matched card:", matchedCard);
+
+  if (matchedCard.status !== APPROVED_CARD_STATUS) {
+    return res.status(403).json({
+      code: 403,
+      message: "Card is blocked, Kindly visit your branch!",
+    });
+  }
+
+  let isMatchedExpiryDate = expiryDate === matchedCard.expiryDate;
+  let isMatchedCvv = await bcrypt.compare(cvv, matchedCard.cvv);
+
+  if (!isMatchedExpiryDate || !isMatchedCvv) {
+    return res.status(400).json({
+      code: 400,
+      message: "Card Details are Invalid!",
+    });
+  }
+
+  //lets check if the card has expired
+  let cardExpiryChecker = checkIfCardhasExpired(expiryDate);
+  if (cardExpiryChecker) {
+    return res.status(400).json({
+      code: 400,
+      message: "Card has Expired!",
+    });
+  }
+
+  const checkReceiverExist = await Account.findOne({
+    accountNumber: receiverAcc,
+  });
+  if (!checkReceiverExist) {
+    return res.status(404).json({
+      code: 404,
+      message: "Receiver not found",
+    });
+  }
+
+  const senderInfo = await Account.findById(matchedCard.accountId);
+
+  if (!senderInfo) {
+    return res.status(404).json({
+      code: 404,
+      message: "No account found for this card",
+    });
+  }
+
+
+  let newTransaction = new Transaction({
+    accountId: senderInfo._id,
+    type: "card",
+    amount: Number(amount),
+    status: "pending",
+    senderAccount: senderInfo.accountNumber,
+    receiverAccount: receiverAcc,
+    reference: "PayVerge Card Platform",
+  });
+
+  await newTransaction.save();
+
+  
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
+  
   // Store OTP in a cookie (or a DB/cache with session ID)
-  res.cookie("otp", otp, { maxAge: 5 * 60 * 1000 }); // valid for 5 min
+  // res.cookie("otp", otp, {
+    //   maxAge: 5 * 60 * 1000,
+    //   // httpOnly: false,
+    //   // sameSite: "None",
+    //   // secure: false,
+    // }); // valid for 5 min
+    
+    // send otp
+    
+  senderInfo.transactions.push(newTransaction._id);
+  senderInfo.otpCode = otp;
+  senderInfo.hasOtp = true;
 
+  await senderInfo.save()
+
+  return res.status(200).json({
+    link: `https://connect-trans-backend.onrender.com/api/v1/account/popup/${newTransaction._id}/otp`,
+    tran_id: newTransaction._id.toString(),
+  });
+};
+
+const checkTransactionStatus = async (req, res) => {
+  const { id: tran_id } = req.params;
+  if (!tran_id) {
+    return res.status(400).json({
+      code: 400,
+      message: "tran id is required!",
+    });
+  }
+
+  if (!isValidObjectId(tran_id)) {
+    return res.status(400).json({
+      code: 400,
+      message: "Invalid tran id",
+    });
+  }
+  const transactionExist = await Transaction.findById(tran_id);
+
+  if (!transactionExist) {
+    return res.status(404).json({
+      code: 404,
+      message: "No transactions found",
+    });
+  }
+
+  return res.status(200).json({
+    transaction: {
+      tran_id: transactionExist._id,
+      status: transactionExist.status,
+    },
+    message: "Transaction found",
+  });
+};
+
+const showPopUp = (req, res) => {
   res.sendFile(path.join(__dirname, "../public", "otp.html"));
+};
+const showBankLogo = (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "bank-logo.png"));
 };
 
 //developers
@@ -511,4 +760,7 @@ export {
   generateDummyAccount,
   verifyOtp,
   showOtp,
+  showPopUp,
+  showBankLogo,
+  checkTransactionStatus,
 };

@@ -1,3 +1,5 @@
+const BANK_LOGO = `<img src="https://connect-trans-backend.onrender.com/api/v1/account/bank-logo" alt="Bank logo">`;
+
 export const createDeveloperHTML = (
   username,
   developerId,
@@ -16,7 +18,7 @@ export const createDeveloperHTML = (
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+          ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Trans Bank API</h1>
         </div>
   
@@ -67,7 +69,7 @@ export const changePasswordHtml = (password, fullName) => {
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+          ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Bank Password Change <span style="color: light-green;">Successful!</span></h1>
         </div>
   
@@ -100,7 +102,7 @@ export const forgotPasswordHtml = (defaultPassword, fullName, time) => {
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+        ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Bank Password Change Request</h1>
         </div>
   
@@ -144,7 +146,7 @@ export const createAccountHtml = (
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+          ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Trans Bank</h1>
         </div>
   
@@ -179,8 +181,6 @@ export const createAccountHtml = (
   `;
 };
 
-
-
 export const cardCreationHtml = (
   fullName,
   panNumber,
@@ -198,7 +198,7 @@ export const cardCreationHtml = (
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+          ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Trans Bank Card Creation</h1>
         </div>
   
@@ -252,7 +252,7 @@ export const senderTransactionHtml = (
   
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">
-       
+          ${BANK_LOGO}
           <h1 style="margin: 0;">Connect Trans Bank</h1>
         </div>
   
@@ -300,7 +300,7 @@ export const receiverTransactionHtml = (
   <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
     <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
       <div style="border-radius: 5px; box-shadow: 2px 4px 5px 3px grey; background: white; padding: 20px; width: max-content;">
-  
+          ${BANK_LOGO}
       
         <!-- Email Header -->
         <div style="background: rgba(38, 36, 36, 0.886); color: white; text-align: center; padding: 15px; border-radius: 5px;">

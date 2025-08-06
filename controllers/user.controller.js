@@ -348,7 +348,7 @@ const registerDeveloper = async (req, res) => {
   );
 
   try {
-    await sendMail(email, "DEVELOPER ACCOUNT CREATION", devHtml);
+    await sendMail(email, "DEVELOPER ACCOUNT CREATED", devHtml);
 
     return res.status(200).json({
       devAccount,

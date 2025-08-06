@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ConnecTrans Bank OTP</title>
+    <title>ConnectTrans Bank OTP</title>
     <link
       href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css"
       rel="stylesheet"
@@ -11,14 +11,36 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
-  <body class="flex h-screen bg-gray-100 items-center justify-center">
-    <dialog id="my_modal_4" class="modal" open>
+  <body class="flex h-screen bg-gray-100 items-center justify-center" data-theme="forest">
+    <div
+      class="justify-center w-full flex flex-col items-center gap-4"
+      id="loader"
+    >
+      <img
+        src="https://connect-trans-backend.onrender.com/api/v1/account/bank-logo"
+        alt="Bank logo"
+        width="80px"
+        height="50px"
+        class="animate-pulse"
+      />
+      <h4>Please wait....</h4>
+      <!-- <span class="loading loading-spinner flex items-center loading-xl"></span> -->
+    </div>
+    <dialog id="my_modal_4" class="modal">
       <div class="modal-box w-11/12 max-w-md">
-        <h2 class="text-xl font-semibold text-center" id="title">
-          ConnectTrans Bank
-        </h2>
-        <p class="text-center mt-2" id="paragraph">Kindly enter your OTP</p>
-
+        <div class="header flex flex-col items-center gap-3">
+          <img
+            src="https://connect-trans-backend.onrender.com/api/v1/account/bank-logo"
+            alt="Bank logo"
+            width="40px"
+            height="50px"
+            class="rounded-xl"
+          />
+          <h2 class="text-xl font-semibold text-center" id="title">
+            ConnectTrans Bank
+          </h2>
+          <p class="text-center mt-2" id="paragraph">Kindly enter your OTP</p>
+        </div>
         <form method="dialog" class="space-y-4 mt-4">
           <div id="loading-container" class="flex justify-center hidden">
             <span
@@ -71,6 +93,12 @@
     </dialog>
 
     <script>
+      const loader = document.querySelector("#loader");
+      const dialog = document.querySelector("dialog");
+      setTimeout(() => {
+        loader.classList.add("hidden");
+        dialog.open = "true";
+      }, 3000);
       const inputs = document.querySelectorAll("input[type='text']");
       const verifyBtn = document.querySelector("#verify-btn");
       const loadingContainer = document.querySelector("#loading-container");
@@ -82,7 +110,7 @@
         if (parts.length === 2) return parts.pop().split(";").shift();
       };
 
-      let correctOtp = getCookie("otp"); // e.g., "abc123"
+      // let correctOtp = getCookie("otp"); // e.g., "abc123"
 
       function checkAllInputsFilled() {
         const allFilled = Array.from(inputs).every(
@@ -109,7 +137,7 @@
 
       verifyBtn.disabled = true;
 
-      verifyBtn.addEventListener("click", () => {
+      verifyBtn.addEventListener("click", async() => {
         loadingContainer.classList.remove("hidden");
         inputs.forEach((input) => (input.disabled = true));
         verifyBtn.disabled = true;
@@ -123,12 +151,23 @@
 
         console.log("OTP:", otp);
 
-        setTimeout(() => {
-          loadingContainer.classList.add("hidden");
+        let response = await fetch("hhttps://connect-trans-backend.onrender.com/api/v1/account/verify-otp", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({ otp }),
+      });
 
-          if (otp === correctOtp) {
-            document.querySelector("#paragraph").textContent =
-              "✅ OTP Verified!";
+         let payment = await response.json();
+
+         console.log(payment)
+
+      
+          loadingContainer.classList.add("hidden");
+          if (payment.message === "Payment successful") {
+            // document.querySelector("#paragraph").textContent =
+            //   "✅ OTP Verified!";
             setTimeout(() => {
               loadingContainer.classList.remove("hidden");
               inputs.forEach((input) => (input.style.display = "none"));
@@ -138,27 +177,35 @@
               document.querySelector("#title").style.display = "none";
             }, 2000);
             setTimeout(() => {
-              let idx = Math.floor(Math.random() * 2);
-              let message = ["success", "failed"]
-              let payment = message[idx];
-              console.log({payment})
-            //   fetch("http://localhost:3000/api/v1/account/verify-otp", {
-            //       method: "POST",
-            //       headers: {
-            //           "Content-Type": "application/json",
-            //         },
-            //         body: JSON.stringify({ payment }),
-            //     })
-            //     .then((res) => res.json())
-            //     .then((data) => {
-            //         console.log(data)
-        // });
-                
-                    modal.close();
-                    window.location.href = `http://127.0.0.1:5500/backend/public/card.html?status=${payment}`;
-
+              // let idx = Math.floor(Math.random() * 2);
+              // let message = ["success", "failed"];
+              // let payment = message[idx];
+              // console.log({ payment });
+              modal.close();
+              window.close();
             }, 6000);
-          } else {
+          } 
+          if (payment.message === "Payment failed") {
+            // document.querySelector("#paragraph").textContent =
+            //   "✅ OTP Verified!";
+            setTimeout(() => {
+              loadingContainer.classList.remove("hidden");
+              inputs.forEach((input) => (input.style.display = "none"));
+              verifyBtn.style.display = "none";
+              document.querySelector("#paragraph").textContent =
+                "Redirecting...";
+              document.querySelector("#title").style.display = "none";
+            }, 2000);
+            setTimeout(() => {
+              // let idx = Math.floor(Math.random() * 2);
+              // let message = ["success", "failed"];
+              // let payment = message[idx];
+              // console.log({ payment });
+              modal.close();
+              window.close();
+            }, 6000);
+          } 
+          if(payment.message === "No Account found"){
             document.querySelector("#paragraph").textContent =
               "❌ Invalid OTP. Try again.";
             inputs.forEach((input) => {
@@ -168,7 +215,7 @@
             inputs[0].focus();
             verifyBtn.disabled = true;
           }
-        }, 2000); // simulate verification delay
+   // simulate verification delay
       });
     </script>
   </body>

@@ -2,6 +2,7 @@ import crypto, { randomBytes } from "crypto";
 
 
 
+
 const VISA_PAN = ["401", "432", "455", "467", "421", "410"];
 const MASTERCARD_PAN = ["501", "521", "552", "547", "589", "544"];
 const ALL_PANS = [{ VISA_PAN: VISA_PAN }, { MASTERCARD_PAN: MASTERCARD_PAN }];
@@ -15,7 +16,7 @@ export const pinGenerator = () => {
 
 export const generateDefaultPassword = () => {
   return randomBytes(4).toString("hex");
-}
+};
 
 
 
@@ -93,9 +94,12 @@ export function generateSecretKeyForDev() {
   return crypto.randomUUID();
 }
 
+
 export function generateApiKey() {
   return crypto.randomBytes(16).toString("hex");
 }
+
+
 
 export function getThreeMonthsFromNow() {
   const now = new Date();
@@ -141,7 +145,33 @@ export async function fetchResponses(res, amount, acc1, acc2, ref){
   }, 3000)
 } 
 
+export function checkIfCardhasExpired(cardExpiryDate){
+  // getting current month and year
+  
+const date = new Date();
+date.setMonth(date.getMonth());
 
+const month = String(date.getMonth() + 1).padStart(2, "0");
+
+let year = date.getFullYear(); // Get full year
+year = year.toString().slice(2);
+
+let currentMonthAndYear = `${month}/${year}`;
+
+currentMonthAndYear = currentMonthAndYear.split("/").join("");
+
+
+//card expirydata
+let mainCardExpiryDate = cardExpiryDate.split("/").join("");
+let mainCardExpiryDateYear = Number(mainCardExpiryDate.slice(2))
+if(year > mainCardExpiryDateYear) return true
+
+//checking if card has expired if the card expiry month is due
+currentMonthAndYear = Number(currentMonthAndYear);
+cardExpiryDate = Number(mainCardExpiryDate);
+
+return currentMonthAndYear > cardExpiryDate;
+}
 
 
 

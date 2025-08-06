@@ -33,7 +33,7 @@ const CardSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "blocked", "expired"],
+      enum: ["active", "blocked"],
       default: "active",
     },
     accountId: {

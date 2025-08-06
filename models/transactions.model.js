@@ -11,7 +11,7 @@ const transactionSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["deposit", "withdrawal", "transfer"],
+      enum: ["deposit", "withdrawal", "transfer", "card"],
       required: true,
     },
     amount: {
@@ -31,7 +31,6 @@ const transactionSchema = new Schema(
     },
     reference: {
       type: String,
-      unique: true,
       required: true,
     },
     timestamp: {

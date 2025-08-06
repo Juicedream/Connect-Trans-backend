@@ -58,7 +58,7 @@ const developerSchema = new Schema({
 
   maxUsage: {
     type: Number,
-    default: 100,
+    default: 500,
   },
 
   usageCount: {

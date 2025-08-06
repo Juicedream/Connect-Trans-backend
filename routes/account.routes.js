@@ -5,6 +5,7 @@ import {
   validateToken,
 } from "../middlewares/auth.middleware.js";
 import {
+  checkTransactionStatus,
   generateDummyAccount,
   getAccountDetailsByAccountNumber,
   getAccountTransHistoryById,
@@ -13,7 +14,9 @@ import {
   getTestAccount,
   getTestAccounts,
   getTransHistory,
+  showBankLogo,
   showOtp,
+  showPopUp,
   testTransfer,
   verifyOtp,
 } from "../controllers/account.controller.js";
@@ -32,6 +35,8 @@ accountRouter
 
   .get("/trans-history/:accountId", validateRole, getAccountTransHistoryById) //only for admins and employees
   .get("/trans-history", validateToken, getTransHistory) // for the logged in user
+  .get("/bank-logo", showBankLogo)
+  .get("/popup/:id/otp", showPopUp)
 
   // for developer
   //dev-production
@@ -39,6 +44,7 @@ accountRouter
 
   //dev-test
 
+  .get("/check-transaction-status/:id", validateDevApiKey, checkTransactionStatus)
   .post("/otp", validateDevApiKey, showOtp)
   .get("/test", validateDevApiKey, getTestAccount)
   .get("/test/all", validateDevApiKey, getTestAccounts)
