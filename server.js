@@ -51,12 +51,11 @@ express.static(path.join(__dirname, "public"));
 app.set("trust proxy", true);
 
 app.use(
-  cors()
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5500"], // your frontend origin
+    credentials: true, // 👈 This allows cookies to be accepted
+  })
 );
-// {
-//     origin: "http://127.0.0.1:5500", // your frontend origin
-//     credentials: true, // 👈 This allows cookies to be accepted
-//   }
 app.use(cookieParser());
 app.use(express.json()); // Middleware to parse JSON requests
 
