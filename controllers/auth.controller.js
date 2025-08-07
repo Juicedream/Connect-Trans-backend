@@ -30,6 +30,8 @@ function createLoginToken(res, existingUser) {
   res.cookie("loginToken", token, {
     maxAge: 60 * 60 * 1000,
     httpOnly: true,
+    secure: true, // IMPORTANT: true if using HTTPS (Render is HTTPS)
+    sameSite: "none",
   }); // Expires in 1 hour, httpOnly for security
 
   return token;
