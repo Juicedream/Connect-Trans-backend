@@ -14,6 +14,7 @@ import {
   generateSecretKeyForDev,
   generateApiKey,
   getThreeMonthsFromNow,
+  encryption,
 } from "../config/generator.js";
 import { sendMail } from "../config/email.config.js";
 import {
@@ -22,7 +23,7 @@ import {
   receiverTransactionHtml,
   senderTransactionHtml,
 } from "../htmls/html.js";
-import { SALT } from "../env.js";
+import { ENCRYPTION_PUBLIC_KEY, SALT } from "../env.js";
 import { isValidObjectId } from "mongoose";
 import Developer from "../models/developer.model.js";
 import Account from "../models/account.model.js";
@@ -31,6 +32,8 @@ import Card from "../models/card.model.js";
 
 const raw = fs.readFileSync("./test.users.json", "utf-8");
 const data = JSON.parse(raw);
+
+const encryptedPublicKey = Buffer.from(ENCRYPTION_PUBLIC_KEY, "hex");
 
 // ================= users ===============
 
@@ -140,29 +143,48 @@ const createCard = async (req, res) => {
       });
     }
 
-    // creating card
+    // creating card and encrypting details and hashing pin
     const panNumber = generatePanNumber(cardType); //based on card type;
     const expiryDate = generateExpiryDate();
-    const cvv = cvvGenerator();
+    const cvv = cvvGenerator().toString();
     const pin = pinGenerator();
 
-    const hashedPanNumber = bcrypt.hashSync(panNumber.toString(), 10);
-    const hashedCvv = bcrypt.hashSync(cvv.toString(), 10);
-    const hashedPin = bcrypt.hashSync(pin, 10);
+    //pan encryption
+    let {iv, content} = await encryption(panNumber, encryptedPublicKey);
+    let panSecretKey = iv;
+    let encryptPanNumber = content;
+    // cvv encryption
+    let {iv:cvvIv, content:cvvContent} = await encryption(cvv, encryptedPublicKey);
+    let encryptCvv = cvvContent;
+    let cvvSecretKey = cvvIv;
+    // pin encryption
+    const hashedPin = await bcrypt.hashSync(pin, Number(SALT));
 
     const userAccount = await Account.findOne({ userId: user._id });
     const newCard = new Card({
-      panNumber: hashedPanNumber,
+      panNumber: encryptPanNumber,
+      panSecretKey,
       cardHolderName: user.name.toUpperCase(),
       expiryDate,
       faceType,
       cardType,
-      cvv: hashedCvv,
+      cvv: encryptCvv,
+      cvvSecretKey,
       accountId: userAccount?._id,
       pin: hashedPin,
     });
 
+
+
     let amount = cardType === "mastercard" ? 2000 : 1000;
+
+    if(userAccount.accountType !== "current" && cardType === "mastercard"){
+      return res.status(400).json({
+        code: 400,
+        message: "Savings account can't have mastercard",
+      });
+    }
+
 
     let calculated = userAccount.balance - amount;
 
@@ -303,12 +325,13 @@ const registerDeveloper = async (req, res) => {
 
   let devUsername = user.name;
 
-  // create api key and secret key
-  let devSecretKey = generateSecretKeyForDev();
-  let hashedSecretKey = bcrypt.hashSync(devSecretKey, Number(SALT));
+  // create and encrypt api key and secret key
 
   let apiKey = generateApiKey();
-  let hashedAPIKey = bcrypt.hashSync(apiKey, Number(SALT));
+  let {iv, content} = await encryption(apiKey, encryptedPublicKey);
+  let encryptedSecretKey = iv;
+  let encryptedApiKey = content;
+  console.log(encryptedSecretKey)
 
   let apiKeyExpiryDate = getThreeMonthsFromNow();
 
@@ -319,8 +342,8 @@ const registerDeveloper = async (req, res) => {
     username: devUsername,
     email,
     host,
-    apiKey: hashedAPIKey,
-    secretKey: hashedSecretKey,
+    apiKey: encryptedApiKey,
+    secretKey: encryptedSecretKey,
     expiryDate: apiKeyExpiryDate,
   });
 
@@ -343,7 +366,7 @@ const registerDeveloper = async (req, res) => {
     devAccount.status,
     devAccount.createdAt,
     apiKey,
-    devSecretKey,
+    encryptedSecretKey,
     devAccount.environment
   );
 

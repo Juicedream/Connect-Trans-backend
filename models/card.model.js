@@ -9,6 +9,11 @@ const CardSchema = new Schema(
       required: true,
       unique: true, // Ensures no duplicate card numbers
     },
+    panSecretKey: {
+      type: String, // Changed to String to prevent number precision issues
+      required: true,
+      unique: true, // Ensures no duplicate card numbers
+    },
     cardHolderName: {
       type: String,
       required: true,
@@ -20,6 +25,11 @@ const CardSchema = new Schema(
     cvv: {
       type: String, // Should be encrypted in a real-world app
       required: true,
+    },
+    cvvSecretKey: {
+      type: String, // Should be encrypted in a real-world app
+      required: true,
+      unique: true
     },
     cardType: {
       type: String,
@@ -36,6 +46,7 @@ const CardSchema = new Schema(
       enum: ["active", "blocked"],
       default: "active",
     },
+
     accountId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account", // Links the card to an account

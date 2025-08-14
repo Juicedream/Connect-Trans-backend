@@ -1,4 +1,5 @@
 import crypto, { randomBytes } from "crypto";
+import { ALGORITHM } from "../env.js";
 
 
 
@@ -114,6 +115,36 @@ export function getThreeMonthsFromNow() {
 
 
 
+export async function encryption(number, key){
+let iv = crypto.randomBytes(16);  
+ const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+ let encrypted = cipher.update(number, "utf8", "hex");
+ encrypted += cipher.final("hex");
+ return {
+   iv: iv.toString("hex"),
+   content: encrypted,
+ };
+
+}
+
+
+
+export async function decryption(dataThatwasEncyrpted, secretKeyFromUser,  publicKey){
+  
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    publicKey,
+    Buffer.from(secretKeyFromUser, "hex")
+  );
+  let decrypted = decipher.update(dataThatwasEncyrpted, "hex", "utf8");
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+
+
+
+
 
 export async function fetchResponses(res, amount, acc1, acc2, ref){
   const status = [200, 400] ;
@@ -175,3 +206,4 @@ return currentMonthAndYear > cardExpiryDate;
 
 
 
+  

@@ -73,6 +73,7 @@
     </div>
 
     <script>
+      const mainUrl = "https://connect-trans-backend.onrender.com/api/v1";
       const form = document.getElementById("form");
       const cardForm = document.getElementById("cardForm");
       const urlParams = new URLSearchParams(window.location.search);
@@ -100,9 +101,9 @@
         let expiryDate = form.get("expiryDate")
         let cvv = form.get("cvv")
 
-        let payload = JSON.stringify({panNumber, expiryDate, cvv, receiverAcc: "3012972318", receiverBank:"ConnectTrans Bank", amount:"120000"})
+        let payload = JSON.stringify({panNumber, expiryDate, cvv, receiverAcc: "3015513591", receiverBank:"ConnectTrans Bank", amount:"1200"})
 
-        let apiKey = "123456";
+        let apiKey = "12657";
 
         // sending payload to endpoint
         console.log(payload);
@@ -124,7 +125,7 @@
           return options
           }
 
-         let data = await fetch("https://connect-trans-backend.onrender.com/api/v1/account/otp", setOptions("POST", payload))
+         let data = await fetch(`${mainUrl}/account/otp`, setOptions("POST", payload))
 
          if(!data.ok){
           button.textContent = "Proceed"
@@ -146,7 +147,7 @@
          window.open(response.link, "_blank", "width=420, height=400")
          const RUN_EVERY = 40000 //every 40 secs
          let statusChecker = setInterval(async () => {
-           let paymentResponse = await fetch(`https://connect-trans-backend.onrender.com/api/v1/account/check-transaction-status/${response.tran_id}`, setOptions("GET"))
+           let paymentResponse = await fetch(`${mainUrl}/account/check-transaction-status/${response.tran_id}`, setOptions("GET"))
 
             console.log("Payment still pending...")
            let check = await paymentResponse.json();

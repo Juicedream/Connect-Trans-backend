@@ -38,7 +38,7 @@ userRouter
   .put("/:userId", validateToken, updateUser)
 
   .post("/create-card", validateToken, createCard)
-  .get("/card-details/:id")
+  .get("/card-details/:id", validateToken)
 
   .put("/info/:id")
 

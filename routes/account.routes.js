@@ -5,6 +5,7 @@ import {
   validateToken,
 } from "../middlewares/auth.middleware.js";
 import {
+  bulkTransferFunds,
   checkTransactionStatus,
   generateDummyAccount,
   getAccountDetailsByAccountNumber,
@@ -18,6 +19,7 @@ import {
   showOtp,
   showPopUp,
   testTransfer,
+  transferFund,
   verifyOtp,
 } from "../controllers/account.controller.js";
 
@@ -36,7 +38,12 @@ accountRouter
   .get("/trans-history/:accountId", validateRole, getAccountTransHistoryById) //only for admins and employees
   .get("/trans-history", validateToken, getTransHistory) // for the logged in user
   .get("/bank-logo", showBankLogo)
-  .get("/popup/:id/otp", showPopUp)
+  .get("/popup/:id", showPopUp)
+
+  .get("/card-details/:id", validateToken)
+
+  .post("/transfer-fund", validateToken, transferFund)
+  .post("/bulk-transfer-funds", validateToken, bulkTransferFunds)
 
   // for developer
   //dev-production

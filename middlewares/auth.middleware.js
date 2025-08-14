@@ -1,10 +1,13 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { JWT_SECRET } from "../env.js";
+import { ENCRYPTION_PUBLIC_KEY, JWT_SECRET } from "../env.js";
 import Developer from "../models/developer.model.js";
 import User from "../models/user.model.js";
+import { decrypt } from "dotenv";
+import { decryption } from "../config/generator.js";
 
 export const APPROVED_ROLES = ["admin", "employee"];
+const encryptedPublicKey = Buffer.from(ENCRYPTION_PUBLIC_KEY, "hex");
 
 export async function validateToken(req, res, next){
   const token = req.cookies.loginToken;
@@ -109,7 +112,7 @@ export async function validateDevApiKey(req, res, next) {
     let userAcc;
 
     for (const keyRecord of developers) {
-      const isMatch = await bcrypt.compare(apiKey, keyRecord.apiKey);
+      const isMatch = await decryption(keyRecord.apiKey, keyRecord.secretKey, encryptedPublicKey) === apiKey;
       if (isMatch) {
         matchedKey = keyRecord;
         userAcc = await User.findOne({ developerAccount: matchedKey._id });

@@ -11,7 +11,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
-  <body class="flex h-screen bg-gray-100 items-center justify-center" data-theme="forest">
+  <body
+    class="flex h-screen bg-gray-100 items-center justify-center"
+    data-theme="forest"
+  >
     <div
       class="justify-center w-full flex flex-col items-center gap-4"
       id="loader"
@@ -94,6 +97,7 @@
 
     <script>
       const loader = document.querySelector("#loader");
+      const mainUrl = "https://connect-trans-backend.onrender.com/api/v1";
       const dialog = document.querySelector("dialog");
       setTimeout(() => {
         loader.classList.add("hidden");
@@ -137,7 +141,7 @@
 
       verifyBtn.disabled = true;
 
-      verifyBtn.addEventListener("click", async() => {
+      verifyBtn.addEventListener("click", async () => {
         loadingContainer.classList.remove("hidden");
         inputs.forEach((input) => (input.disabled = true));
         verifyBtn.disabled = true;
@@ -145,77 +149,86 @@
         document.querySelector("#paragraph").textContent =
           "Hold on, we are verifying your OTP";
 
+        const url = new URL(window.location.href); // Or a specific URL string
+        const pathSegments = url.pathname.split("/");
+        // Assuming the ID is the last segment:
+        const id = pathSegments.pop();
+        // Or if the ID is at a specific index, e.g., the third segment:
+        // const id = pathSegments[2];
+        console.log(id);
+
         const otp = Array.from(inputs)
           .map((input) => input.value)
           .join("");
+       
 
         console.log("OTP:", otp);
 
-        let response = await fetch("hhttps://connect-trans-backend.onrender.com/api/v1/account/verify-otp", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({ otp }),
-      });
-
-         let payment = await response.json();
-
-         console.log(payment)
-
-      
-          loadingContainer.classList.add("hidden");
-          if (payment.message === "Payment successful") {
-            // document.querySelector("#paragraph").textContent =
-            //   "✅ OTP Verified!";
-            setTimeout(() => {
-              loadingContainer.classList.remove("hidden");
-              inputs.forEach((input) => (input.style.display = "none"));
-              verifyBtn.style.display = "none";
-              document.querySelector("#paragraph").textContent =
-                "Redirecting...";
-              document.querySelector("#title").style.display = "none";
-            }, 2000);
-            setTimeout(() => {
-              // let idx = Math.floor(Math.random() * 2);
-              // let message = ["success", "failed"];
-              // let payment = message[idx];
-              // console.log({ payment });
-              modal.close();
-              window.close();
-            }, 6000);
-          } 
-          if (payment.message === "Payment failed") {
-            // document.querySelector("#paragraph").textContent =
-            //   "✅ OTP Verified!";
-            setTimeout(() => {
-              loadingContainer.classList.remove("hidden");
-              inputs.forEach((input) => (input.style.display = "none"));
-              verifyBtn.style.display = "none";
-              document.querySelector("#paragraph").textContent =
-                "Redirecting...";
-              document.querySelector("#title").style.display = "none";
-            }, 2000);
-            setTimeout(() => {
-              // let idx = Math.floor(Math.random() * 2);
-              // let message = ["success", "failed"];
-              // let payment = message[idx];
-              // console.log({ payment });
-              modal.close();
-              window.close();
-            }, 6000);
-          } 
-          if(payment.message === "No Account found"){
-            document.querySelector("#paragraph").textContent =
-              "❌ Invalid OTP. Try again.";
-            inputs.forEach((input) => {
-              input.disabled = false;
-              input.value = "";
-            });
-            inputs[0].focus();
-            verifyBtn.disabled = true;
+        let response = await fetch(
+          `${mainUrl}/account/verify-otp`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ otp, tran_id:id }),
           }
-   // simulate verification delay
+        );
+
+        let payment = await response.json();
+
+        console.log(payment);
+
+        loadingContainer.classList.add("hidden");
+        if (payment.message === "Payment successful") {
+          // document.querySelector("#paragraph").textContent =
+          //   "✅ OTP Verified!";
+          setTimeout(() => {
+            loadingContainer.classList.remove("hidden");
+            inputs.forEach((input) => (input.style.display = "none"));
+            verifyBtn.style.display = "none";
+            document.querySelector("#paragraph").textContent = "Redirecting...";
+            document.querySelector("#title").style.display = "none";
+          }, 2000);
+          setTimeout(() => {
+            // let idx = Math.floor(Math.random() * 2);
+            // let message = ["success", "failed"];
+            // let payment = message[idx];
+            // console.log({ payment });
+            modal.close();
+            window.close();
+          }, 6000);
+        }
+        if (payment.message === "Payment failed") {
+          // document.querySelector("#paragraph").textContent =
+          //   "✅ OTP Verified!";
+          setTimeout(() => {
+            loadingContainer.classList.remove("hidden");
+            inputs.forEach((input) => (input.style.display = "none"));
+            verifyBtn.style.display = "none";
+            document.querySelector("#paragraph").textContent = "Redirecting...";
+            document.querySelector("#title").style.display = "none";
+          }, 2000);
+          setTimeout(() => {
+            // let idx = Math.floor(Math.random() * 2);
+            // let message = ["success", "failed"];
+            // let payment = message[idx];
+            // console.log({ payment });
+            modal.close();
+            window.close();
+          }, 6000);
+        }
+        if (payment.message === "No Account found") {
+          document.querySelector("#paragraph").textContent =
+            "❌ Invalid OTP. Try again.";
+          inputs.forEach((input) => {
+            input.disabled = false;
+            input.value = "";
+          });
+          inputs[0].focus();
+          verifyBtn.disabled = true;
+        }
+        // simulate verification delay
       });
     </script>
   </body>

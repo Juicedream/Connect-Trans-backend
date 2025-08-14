@@ -2,7 +2,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const { PORT, JWT_SECRET, DB_URI, EMAIL_USER, EMAIL_PASS, SALT, URL, NODE_ENV } =
-  process.env;
+export const {
+  PORT,
+  JWT_SECRET,
+  DB_URI,
+  EMAIL_USER,
+  EMAIL_PASS,
+  SALT,
+  URL,
+  NODE_ENV,
+  ENCRYPTION_PUBLIC_KEY,
+  ALGORITHM
+} = process.env;
 
 
