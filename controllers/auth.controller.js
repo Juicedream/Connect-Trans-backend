@@ -11,6 +11,8 @@ import {
 import { sendMail } from "../config/email.config.js";
 import { changePasswordHtml, createAccountHtml, forgotPasswordHtml } from "../htmls/html.js";
 import { JWT_SECRET, SALT } from "../env.js";
+import Card from "../models/card.model.js";
+import Transaction from "../models/transactions.model.js";
 
 export const TIME = 10;
 
@@ -223,7 +225,29 @@ const me = async (req, res) => {
 
   try {
     const authUser = await User.findById(user.id).select("-password");
-    return res.status(200).json({ authUser });
+    let userAccounts = [];
+    let userTransactions = [];
+    for(let account of authUser.accounts){
+      const getAccount = await Account.findById(account);
+      userAccounts.push(getAccount);
+      for(let transaction of getAccount.transactions){
+        const getTransaction = await Transaction.findById(transaction);
+        userTransactions.push(getTransaction);
+      }
+    }
+    let userCards = [];
+    for(let card of authUser.cards){
+      const getCard = await Card.findById(card);
+      userCards.push(getCard);
+    }
+    
+    authUser.accounts = userAccounts;
+    authUser.cards = userCards;
+  
+    return res.status(200).json({
+      authUser,
+      transactions: userTransactions
+    })
   } catch (error) {
     console.log(error);
     return res

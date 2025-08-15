@@ -150,17 +150,20 @@ const createCard = async (req, res) => {
     const pin = pinGenerator();
 
     //pan encryption
-    let {iv, content} = await encryption(panNumber, encryptedPublicKey);
+    let { iv, content } = await encryption(panNumber, encryptedPublicKey);
     let panSecretKey = iv;
     let encryptPanNumber = content;
     // cvv encryption
-    let {iv:cvvIv, content:cvvContent} = await encryption(cvv, encryptedPublicKey);
+    let { iv: cvvIv, content: cvvContent } = await encryption(
+      cvv,
+      encryptedPublicKey
+    );
     let encryptCvv = cvvContent;
     let cvvSecretKey = cvvIv;
     // pin encryption
     const hashedPin = await bcrypt.hashSync(pin, Number(SALT));
-
     const userAccount = await Account.findOne({ userId: user._id });
+    console.log(userAccount);
     const newCard = new Card({
       panNumber: encryptPanNumber,
       panSecretKey,
@@ -174,59 +177,109 @@ const createCard = async (req, res) => {
       pin: hashedPin,
     });
 
-
-
     let amount = cardType === "mastercard" ? 2000 : 1000;
 
-    if(userAccount.accountType !== "current" && cardType === "mastercard"){
-      return res.status(400).json({
-        code: 400,
-        message: "Savings account can't have mastercard",
+    if (user.role !== "admin") {
+      if (userAccount.accountType !== "current" && cardType === "mastercard") {
+        return res.status(400).json({
+          code: 400,
+          message: "Savings account can't have mastercard",
+        });
+      }
+
+      let calculated = userAccount.balance - amount;
+
+      if (calculated <= 0) {
+        return res.status(400).json({
+          code: 400,
+          message: "Couldn't create card, Insufficient funds",
+        });
+      }
+
+      //debit the users account 1000 to the admin account
+      const superAdminAccount = await Account.findOne({
+        accountNumber: "5015237266",
+      });
+
+      const superAdmin = await User.findOne({ email: "judexfrayo@gmail.com" });
+
+      userAccount.balance -= amount;
+
+      superAdminAccount.balance += amount;
+
+      const newTransaction1 = new Transaction({
+        accountId: userAccount._id,
+        type: "withdrawal",
+        amount: 1000,
+        status: "successful",
+        senderAccount: userAccount.accountNumber,
+        receiverAccount: superAdminAccount.accountNumber,
+        reference: "Card Creation",
+      });
+
+      await newTransaction1.save();
+
+      userAccount.transactions = [newTransaction1._id];
+      superAdminAccount.transactions = [newTransaction1._id];
+      await newCard.save();
+      await userAccount.save();
+      await superAdminAccount.save();
+      await user.save();
+
+      await sendMail(
+        user.email,
+        "CARD CREATED!",
+        cardCreationHtml(
+          user.name,
+          panNumber,
+          cardType,
+          newCard.cardHolderName,
+          newCard.expiryDate,
+          pin,
+          cvv,
+          newCard.status
+        )
+      );
+
+      await sendMail(
+        user.email,
+        "MONEY SENT!",
+        senderTransactionHtml(
+          user.name,
+          userAccount.accountNumber,
+          superAdminAccount.accountNumber,
+          amount,
+          newTransaction1.status,
+          userAccount.balance,
+          newTransaction1.reference,
+          newTransaction1.timestamp
+        )
+      );
+
+      await sendMail(
+        superAdmin.email,
+        "MONEY RECEIVED!",
+        receiverTransactionHtml(
+          superAdmin.name,
+          superAdminAccount.accountNumber,
+          userAccount.accountNumber,
+          amount,
+          newTransaction1.status,
+          superAdminAccount.balance,
+          newTransaction1.reference,
+          newTransaction1.timestamp
+        )
+      );
+      return res.status(200).json({
+        message: "Card created successfully! check your email",
       });
     }
-
-
-    let calculated = userAccount.balance - amount;
-
-    if (calculated <= 0) {
-      return res.status(400).json({
-        code: 400,
-        message: "Couldn't create card, Insufficient funds",
-      });
-    }
-
-    //debit the users account 1000 to the admin account
-    const superAdminAccount = await Account.findOne({
-      accountNumber: "5015237266",
-    });
-
-    const superAdmin = await User.findOne({ email: "judexfrayo@gmail.com" });
-
-    userAccount.balance -= amount;
-
-    superAdminAccount.balance += amount;
-
-    const newTransaction1 = new Transaction({
-      accountId: userAccount._id,
-      type: "withdrawal",
-      amount: 1000,
-      status: "successful",
-      senderAccount: userAccount.accountNumber,
-      receiverAccount: superAdminAccount.accountNumber,
-      reference: "Card Creation",
-    });
 
     user.cards = [newCard?._id];
     userAccount.hasCard = true;
     userAccount.cardType = cardType;
-
-    await newTransaction1.save();
-
-    userAccount.transactions = [newTransaction1._id];
-    superAdminAccount.transactions = [newTransaction1._id];
     await newCard.save();
     await userAccount.save();
-    await superAdminAccount.save();
     await user.save();
 
     await sendMail(
@@ -241,36 +294,6 @@ const createCard = async (req, res) => {
         pin,
         cvv,
         newCard.status
-      )
-    );
-
-    await sendMail(
-      user.email,
-      "MONEY SENT!",
-      senderTransactionHtml(
-        user.name,
-        userAccount.accountNumber,
-        superAdminAccount.accountNumber,
-        amount,
-        newTransaction1.status,
-        userAccount.balance,
-        newTransaction1.reference,
-        newTransaction1.timestamp
-      )
-    );
-
-    await sendMail(
-      superAdmin.email,
-      "MONEY RECEIVED!",
-      receiverTransactionHtml(
-        superAdmin.name,
-        superAdminAccount.accountNumber,
-        userAccount.accountNumber,
-        amount,
-        newTransaction1.status,
-        superAdminAccount.balance,
-        newTransaction1.reference,
-        newTransaction1.timestamp
       )
     );
 
@@ -328,10 +351,10 @@ const registerDeveloper = async (req, res) => {
   // create and encrypt api key and secret key
 
   let apiKey = generateApiKey();
-  let {iv, content} = await encryption(apiKey, encryptedPublicKey);
+  let { iv, content } = await encryption(apiKey, encryptedPublicKey);
   let encryptedSecretKey = iv;
   let encryptedApiKey = content;
-  console.log(encryptedSecretKey)
+  console.log(encryptedSecretKey);
 
   let apiKeyExpiryDate = getThreeMonthsFromNow();
 

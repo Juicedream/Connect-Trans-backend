@@ -48,7 +48,7 @@ cron.schedule(`*/${TIME} * * * *`, () => {
 
 express.static(path.join(__dirname, "public"));
 
-app.set("trust proxy", true);
+// app.set("trust proxy", true);
 
 app.use(
   cors({
